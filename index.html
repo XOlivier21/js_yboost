@@ -1,198 +1,487 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokedex - Cartes Pokemon</title>
-    <style>
-        :root {
-            --bg-1: #f4f7ff;
-            --bg-2: #dbe7ff;
-            --ink: #1f2937;
-            --accent: #0f766e;
-            --accent-2: #14b8a6;
-            --card: #ffffff;
-            --muted: #6b7280;
-        }
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Pokemon Explorer</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Bungee:wght@400&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--bg-start: #ffe08a;
+			--bg-mid: #89cff0;
+			--bg-end: #1f5a98;
+			--surface: #ffffff;
+			--text: #1f2a44;
+			--muted: #5c6b8a;
+			--accent: #ef5350;
+			--accent-2: #ffb300;
+			--card-shadow: 0 14px 36px rgba(10, 33, 68, 0.18);
+			--radius: 18px;
+		}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+		* {
+			box-sizing: border-box;
+		}
 
-        body {
-            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-            background: radial-gradient(circle at 20% 20%, var(--bg-2), var(--bg-1));
-            min-height: 100vh;
-            color: var(--ink);
-            padding: 24px;
-        }
+		body {
+			margin: 0;
+			font-family: "Space Grotesk", sans-serif;
+			color: var(--text);
+			min-height: 100vh;
+			background:
+				radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.35), transparent 45%),
+				radial-gradient(circle at 80% 10%, rgba(255, 190, 60, 0.25), transparent 35%),
+				linear-gradient(140deg, var(--bg-start) 0%, var(--bg-mid) 45%, var(--bg-end) 100%);
+			background-attachment: fixed;
+			padding: 28px 16px 36px;
+		}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+		.page {
+			width: min(1100px, 100%);
+			margin: 0 auto;
+		}
 
-        .header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 24px;
-        }
+		.hero {
+			position: relative;
+			border-radius: 28px;
+			background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.8));
+			box-shadow: var(--card-shadow);
+			padding: 24px;
+			overflow: hidden;
+			animation: rise-in 650ms ease-out;
+		}
 
-        h1 {
-            font-size: 2rem;
-            letter-spacing: 0.5px;
-        }
+		.hero::before,
+		.hero::after {
+			content: "";
+			position: absolute;
+			border-radius: 50%;
+			pointer-events: none;
+		}
 
-        .pokemon-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 18px;
-        }
+		.hero::before {
+			width: 220px;
+			height: 220px;
+			right: -80px;
+			top: -80px;
+			background: radial-gradient(circle, rgba(239, 83, 80, 0.22), transparent 70%);
+		}
 
-        .pokemon-card {
-            background: var(--card);
-            border-radius: 14px;
-            box-shadow: 0 8px 28px rgba(15, 23, 42, 0.12);
-            overflow: hidden;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
+		.hero::after {
+			width: 180px;
+			height: 180px;
+			left: -55px;
+			bottom: -70px;
+			background: radial-gradient(circle, rgba(31, 90, 152, 0.22), transparent 70%);
+		}
 
-        .pokemon-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
-        }
+		h1 {
+			margin: 0;
+			font-family: "Bungee", sans-serif;
+			letter-spacing: 1px;
+			color: #143869;
+			font-size: clamp(1.8rem, 4vw, 2.6rem);
+			line-height: 1.2;
+			text-transform: uppercase;
+		}
 
-        .pokemon-image {
-            background: linear-gradient(135deg, #cffafe, #e0e7ff);
-            height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-        }
+		.subtitle {
+			margin: 10px 0 20px;
+			color: var(--muted);
+			font-weight: 500;
+		}
 
-        .pokemon-image img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
+		.api-toolbar {
+			display: grid;
+			grid-template-columns: 1fr auto;
+			gap: 10px;
+			margin-bottom: 14px;
+		}
 
-        .pokemon-info {
-            padding: 14px;
-        }
+		input,
+		select,
+		button {
+			border: 2px solid transparent;
+			border-radius: 12px;
+			font-family: inherit;
+			font-size: 0.96rem;
+			transition: all 180ms ease;
+		}
 
-        .name-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            gap: 8px;
-        }
+		input,
+		select {
+			width: 100%;
+			padding: 11px 12px;
+			background: #ffffff;
+			border-color: #d8e1ef;
+			color: var(--text);
+		}
 
-        .pokemon-name {
-            font-size: 1.15rem;
-            font-weight: 800;
-        }
+		input:focus,
+		select:focus {
+			outline: none;
+			border-color: #1f5a98;
+			box-shadow: 0 0 0 3px rgba(31, 90, 152, 0.15);
+		}
 
-        .pokemon-id {
-            color: var(--muted);
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
+		button {
+			cursor: pointer;
+			padding: 11px 16px;
+			font-weight: 700;
+			color: #ffffff;
+			background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+			box-shadow: 0 8px 18px rgba(239, 83, 80, 0.28);
+		}
 
-        .stats {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
+		button:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 10px 20px rgba(239, 83, 80, 0.35);
+		}
 
-        .types {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
+		.filters {
+			display: grid;
+			grid-template-columns: 1.2fr 0.8fr;
+			gap: 10px;
+		}
 
-        .type {
-            padding: 4px 10px;
-            border-radius: 999px;
-            background: #0ea5e9;
-            color: white;
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
+		.status {
+			margin: 16px 2px 0;
+			min-height: 22px;
+			font-size: 0.92rem;
+			color: var(--muted);
+			font-weight: 500;
+		}
 
-        .state {
-            margin-top: 18px;
-            color: var(--muted);
-            font-weight: 600;
-        }
-    </style>
+		.status.error {
+			color: #b42318;
+		}
+
+		.pokedex {
+			margin-top: 20px;
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+			gap: 16px;
+		}
+
+		.pokemon-card {
+			background: rgba(255, 255, 255, 0.94);
+			border-radius: var(--radius);
+			padding: 14px;
+			box-shadow: var(--card-shadow);
+			display: flex;
+			flex-direction: column;
+			animation: fade-up 420ms ease both;
+		}
+
+		.pokemon-image-wrap {
+			border-radius: 14px;
+			background: linear-gradient(140deg, #f8fbff 0%, #e9f3ff 100%);
+			padding: 12px;
+			display: grid;
+			place-items: center;
+			min-height: 132px;
+		}
+
+		.pokemon-image {
+			width: 112px;
+			height: 112px;
+			object-fit: contain;
+			filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.16));
+		}
+
+		.pokemon-top {
+			display: flex;
+			justify-content: space-between;
+			gap: 10px;
+			margin-top: 12px;
+			align-items: flex-start;
+		}
+
+		.pokemon-name {
+			margin: 0;
+			font-size: 1.06rem;
+			line-height: 1.2;
+		}
+
+		.pokemon-id {
+			margin: 0;
+			font-size: 0.83rem;
+			color: #7d8dac;
+			font-weight: 700;
+		}
+
+		.stats {
+			margin-top: 10px;
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 8px;
+		}
+
+		.stat {
+			background: #f2f7ff;
+			border-radius: 10px;
+			padding: 8px;
+			text-align: center;
+		}
+
+		.stat-label {
+			margin: 0;
+			font-size: 0.72rem;
+			color: #7080a0;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+		}
+
+		.stat-value {
+			margin: 3px 0 0;
+			font-size: 1rem;
+			font-weight: 700;
+		}
+
+		.types {
+			margin-top: 10px;
+			display: flex;
+			flex-wrap: wrap;
+			gap: 6px;
+		}
+
+		.type-badge {
+			padding: 5px 10px;
+			border-radius: 999px;
+			font-size: 0.75rem;
+			font-weight: 700;
+			color: #0f2d59;
+			background: #e2edff;
+		}
+
+		.type-Feu { background: #ffddc7; }
+		.type-Eau { background: #d5f0ff; }
+		.type-Plante { background: #d9f9dc; }
+		.type-Electrik { background: #fff3b0; }
+		.type-Poison { background: #efd9ff; }
+		.type-Vol { background: #dde8ff; }
+		.type-Insecte { background: #eef4bf; }
+		.type-Normal { background: #f0ebe2; }
+		.type-Fee, .type-Fée { background: #ffe1f0; }
+
+		.empty {
+			grid-column: 1 / -1;
+			background: rgba(255, 255, 255, 0.9);
+			border-radius: var(--radius);
+			padding: 20px;
+			text-align: center;
+			color: var(--muted);
+			box-shadow: var(--card-shadow);
+		}
+
+		@keyframes rise-in {
+			from {
+				opacity: 0;
+				transform: translateY(18px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		@keyframes fade-up {
+			from {
+				opacity: 0;
+				transform: translateY(16px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		@media (max-width: 700px) {
+			.hero {
+				padding: 18px;
+			}
+
+			.api-toolbar,
+			.filters {
+				grid-template-columns: 1fr;
+			}
+		}
+	</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Pokedex - Cartes Pokemon</h1>
-        </div>
+	<main class="page">
+		<section class="hero">
+			<h1>Pokedex Frontend</h1>
+			<p class="subtitle">Connecte ton API Vercel et explore tes Pokemons en live.</p>
 
-        <div id="pokemon-grid" class="pokemon-grid"></div>
-        <p id="state" class="state">Chargement des pokemons...</p>
-    </div>
+			<div class="api-toolbar">
+				<input id="apiBase" type="url" placeholder="https://ton-api.vercel.app" aria-label="URL de base API">
+				<button id="connectBtn" type="button">Connecter</button>
+			</div>
 
-    <script>
-        const grid = document.getElementById('pokemon-grid');
-        const state = document.getElementById('state');
+			<div class="filters">
+				<input id="searchInput" type="search" placeholder="Rechercher un pokemon..." aria-label="Recherche pokemon">
+				<select id="typeFilter" aria-label="Filtrer par type">
+					<option value="">Tous les types</option>
+				</select>
+			</div>
 
-        function createPokemonCard(pokemon) {
-            const card = document.createElement('article');
-            card.className = 'pokemon-card';
+			<p id="status" class="status"></p>
+		</section>
 
-            card.innerHTML = `
-                <div class="pokemon-image">
-                    <img src="${pokemon.picture}" alt="${pokemon.name}">
-                </div>
-                <div class="pokemon-info">
-                    <div class="name-row">
-                        <h2 class="pokemon-name">${pokemon.name}</h2>
-                        <span class="pokemon-id">#${pokemon.id}</span>
-                    </div>
-                    <div class="stats">
-                        <span><strong>HP:</strong> ${pokemon.hp}</span>
-                        <span><strong>CP:</strong> ${pokemon.cp}</span>
-                    </div>
-                    <div class="types">
-                        ${(pokemon.types || []).map((type) => `<span class="type">${type}</span>`).join('')}
-                    </div>
-                </div>
-            `;
+		<section id="pokedex" class="pokedex" aria-live="polite"></section>
+	</main>
 
-            return card;
-        }
+	<script>
+		const state = {
+			allPokemons: [],
+			filteredPokemons: [],
+			apiBase: localStorage.getItem("pokemon_api_base") || window.location.origin
+		};
 
-        async function loadPokemons() {
-            try {
-                const response = await fetch('/api/pokemons');
-                if (!response.ok) {
-                    throw new Error('Erreur API: ' + response.status);
-                }
+		const apiBaseInput = document.getElementById("apiBase");
+		const connectBtn = document.getElementById("connectBtn");
+		const searchInput = document.getElementById("searchInput");
+		const typeFilter = document.getElementById("typeFilter");
+		const statusEl = document.getElementById("status");
+		const pokedexEl = document.getElementById("pokedex");
 
-                const payload = await response.json();
-                const data = payload.data || [];
+		apiBaseInput.value = state.apiBase;
 
-                grid.innerHTML = '';
-                data.forEach((pokemon) => {
-                    grid.appendChild(createPokemonCard(pokemon));
-                });
+		connectBtn.addEventListener("click", loadPokemons);
+		searchInput.addEventListener("input", applyFilters);
+		typeFilter.addEventListener("change", applyFilters);
 
-                state.textContent = `${data.length} pokemons affiches`;
-            } catch (error) {
-                state.textContent = 'Impossible de charger les pokemons.';
-            }
-        }
+		loadPokemons();
 
-        loadPokemons();
-    </script>
+		async function loadPokemons() {
+			const apiBase = apiBaseInput.value.trim().replace(/\/$/, "");
+			if (!apiBase) {
+				setStatus("Ajoute une URL API valide.", true);
+				return;
+			}
+
+			state.apiBase = apiBase;
+			localStorage.setItem("pokemon_api_base", apiBase);
+			setStatus("Chargement des pokemons...");
+
+			try {
+				const response = await fetch(`${apiBase}/api/pokemons`);
+				if (!response.ok) {
+					throw new Error(`Erreur HTTP ${response.status}`);
+				}
+
+				const payload = await response.json();
+				const pokemons = Array.isArray(payload.data) ? payload.data : [];
+
+				state.allPokemons = pokemons;
+				syncTypes(pokemons);
+				applyFilters();
+				setStatus(`${pokemons.length} pokemons charges depuis ${apiBase}`);
+			} catch (error) {
+				state.allPokemons = [];
+				state.filteredPokemons = [];
+				renderPokemons([]);
+				setStatus(`Impossible de contacter l'API: ${error.message}`, true);
+			}
+		}
+
+		function syncTypes(pokemons) {
+			const selected = typeFilter.value;
+			const types = [...new Set(pokemons.flatMap((pokemon) => pokemon.types || []))].sort((a, b) => a.localeCompare(b));
+
+			typeFilter.innerHTML = '<option value="">Tous les types</option>';
+			for (const type of types) {
+				const option = document.createElement("option");
+				option.value = type;
+				option.textContent = type;
+				typeFilter.appendChild(option);
+			}
+
+			if (types.includes(selected)) {
+				typeFilter.value = selected;
+			}
+		}
+
+		function applyFilters() {
+			const searchTerm = searchInput.value.trim().toLowerCase();
+			const selectedType = typeFilter.value;
+
+			state.filteredPokemons = state.allPokemons.filter((pokemon) => {
+				const name = (pokemon.name || "").toLowerCase();
+				const byName = name.includes(searchTerm);
+				const byType = !selectedType || (pokemon.types || []).includes(selectedType);
+				return byName && byType;
+			});
+
+			renderPokemons(state.filteredPokemons);
+		}
+
+		function renderPokemons(pokemons) {
+			if (!pokemons.length) {
+				pokedexEl.innerHTML = '<article class="empty">Aucun pokemon ne correspond a ce filtre.</article>';
+				return;
+			}
+
+			pokedexEl.innerHTML = pokemons.map((pokemon, index) => {
+				const safeTypes = Array.isArray(pokemon.types) ? pokemon.types : [];
+				const typesHtml = safeTypes
+					.map((type) => `<span class="type-badge type-${normalizeType(type)}">${escapeHtml(type)}</span>`)
+					.join("");
+
+				return `
+					<article class="pokemon-card" style="animation-delay:${Math.min(index * 40, 320)}ms">
+						<div class="pokemon-image-wrap">
+							<img class="pokemon-image" src="${escapeAttribute(pokemon.picture || "")}" alt="${escapeAttribute(pokemon.name || "Pokemon")}">
+						</div>
+						<div class="pokemon-top">
+							<div>
+								<h2 class="pokemon-name">${escapeHtml(pokemon.name || "Inconnu")}</h2>
+								<p class="pokemon-id">#${String(pokemon.id || "?").padStart(3, "0")}</p>
+							</div>
+						</div>
+						<div class="stats">
+							<div class="stat">
+								<p class="stat-label">HP</p>
+								<p class="stat-value">${escapeHtml(String(pokemon.hp || 0))}</p>
+							</div>
+							<div class="stat">
+								<p class="stat-label">CP</p>
+								<p class="stat-value">${escapeHtml(String(pokemon.cp || 0))}</p>
+							</div>
+						</div>
+						<div class="types">${typesHtml || '<span class="type-badge">-</span>'}</div>
+					</article>
+				`;
+			}).join("");
+		}
+
+		function setStatus(message, isError = false) {
+			statusEl.textContent = message;
+			statusEl.classList.toggle("error", isError);
+		}
+
+		function normalizeType(type) {
+			return String(type)
+				.normalize("NFD")
+				.replace(/[\u0300-\u036f]/g, "")
+				.replace(/[^a-zA-Z0-9]/g, "");
+		}
+
+		function escapeHtml(value) {
+			return String(value)
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/\"/g, "&quot;")
+				.replace(/'/g, "&#039;");
+		}
+
+		function escapeAttribute(value) {
+			return escapeHtml(value).replace(/\"/g, "&quot;");
+		}
+	</script>
 </body>
 </html>
