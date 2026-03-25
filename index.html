@@ -338,7 +338,8 @@
 		const state = {
 			allPokemons: [],
 			filteredPokemons: [],
-			apiBase: localStorage.getItem("pokemon_api_base") || window.location.origin
+			apiBase: localStorage.getItem("pokemon_api_base") || window.location.origin,
+			endpointUsed: ""
 		};
 
 		const apiBaseInput = document.getElementById("apiBase");
@@ -368,24 +369,42 @@
 			setStatus("Chargement des pokemons...");
 
 			try {
-				const response = await fetch(`${apiBase}/api/pokemons`);
-				if (!response.ok) {
-					throw new Error(`Erreur HTTP ${response.status}`);
-				}
-
-				const payload = await response.json();
+				const { payload, endpoint } = await fetchPokemonsWithFallback(apiBase);
 				const pokemons = Array.isArray(payload.data) ? payload.data : [];
+				state.endpointUsed = endpoint;
 
 				state.allPokemons = pokemons;
 				syncTypes(pokemons);
 				applyFilters();
-				setStatus(`${pokemons.length} pokemons charges depuis ${apiBase}`);
+				setStatus(`${pokemons.length} pokemons charges depuis ${apiBase}${endpoint}`);
 			} catch (error) {
 				state.allPokemons = [];
 				state.filteredPokemons = [];
 				renderPokemons([]);
-				setStatus(`Impossible de contacter l'API: ${error.message}`, true);
+				setStatus(`Impossible de contacter l'API. Verifie ton URL Vercel et les routes /api/pokemons ou /pokemon. Detail: ${error.message}`, true);
 			}
+		}
+
+		async function fetchPokemonsWithFallback(apiBase) {
+			const endpoints = ["/api/pokemons", "/pokemon"];
+			let lastError = null;
+
+			for (const endpoint of endpoints) {
+				try {
+					const response = await fetch(`${apiBase}${endpoint}`);
+					if (!response.ok) {
+						lastError = new Error(`HTTP ${response.status} sur ${endpoint}`);
+						continue;
+					}
+
+					const payload = await response.json();
+					return { payload, endpoint };
+				} catch (error) {
+					lastError = error;
+				}
+			}
+
+			throw lastError || new Error("Aucun endpoint pokemon valide");
 		}
 
 		function syncTypes(pokemons) {
