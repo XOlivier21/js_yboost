@@ -335,10 +335,21 @@
 	</main>
 
 	<script>
+		const savedApiBase = localStorage.getItem("pokemon_api_base");
+		const currentOrigin = window.location.origin;
+		const shouldForceSameOrigin =
+			window.location.hostname.includes("vercel.app") &&
+			savedApiBase &&
+			savedApiBase !== currentOrigin;
+
+		if (shouldForceSameOrigin) {
+			localStorage.removeItem("pokemon_api_base");
+		}
+
 		const state = {
 			allPokemons: [],
 			filteredPokemons: [],
-			apiBase: localStorage.getItem("pokemon_api_base") || window.location.origin,
+			apiBase: shouldForceSameOrigin ? currentOrigin : (savedApiBase || currentOrigin),
 			endpointUsed: ""
 		};
 
@@ -391,7 +402,12 @@
 
 			for (const endpoint of endpoints) {
 				try {
-					const response = await fetch(`${apiBase}${endpoint}`);
+					const response = await fetch(`${apiBase}${endpoint}`, {
+						method: "GET",
+						headers: {
+							"Accept": "application/json"
+						}
+					});
 					if (!response.ok) {
 						lastError = new Error(`HTTP ${response.status} sur ${endpoint}`);
 						continue;
