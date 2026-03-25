@@ -119,40 +119,6 @@ app.get('/', (req, res) => {
             .see-details:hover {
                 transform: scale(1.05);
             }
-            .see-more-btn {
-                display: inline-block;
-                margin-top: 10px;
-                background: #1f2937;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 20px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: transform 0.2s ease, background 0.2s ease;
-            }
-            .see-more-btn:hover {
-                transform: scale(1.05);
-                background: #111827;
-            }
-            .pokemon-details {
-                margin-top: 12px;
-                text-align: left;
-                background: #0f172a;
-                color: #e2e8f0;
-                border-radius: 10px;
-                padding: 12px;
-                display: none;
-                max-height: 220px;
-                overflow: auto;
-            }
-            .pokemon-details pre {
-                margin: 0;
-                font-size: 0.85em;
-                line-height: 1.4;
-                white-space: pre-wrap;
-                word-break: break-word;
-            }
         </style>
     </head>
     <body>
@@ -178,11 +144,6 @@ app.get('/', (req, res) => {
     `;
 
     pokemons.forEach(pokemon => {
-        const pokemonJs = JSON.stringify(pokemon, null, 2)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-
         html += `
                 <div class="pokemon-card">
                     <div class="pokemon-image">
@@ -195,10 +156,6 @@ app.get('/', (req, res) => {
                             ${pokemon.types.map(type => `<span class="type-badge">${type}</span>`).join('')}
                         </div>
                         <a href="/api/pokemons/${pokemon.id}" class="see-details">Voir Les Détails</a>
-                        <button type="button" class="see-more-btn" onclick="togglePokemonDetails('pokemon-${pokemon.id}', this)">Voir plus (JS)</button>
-                        <div id="pokemon-${pokemon.id}" class="pokemon-details">
-                            <pre>${pokemonJs}</pre>
-                        </div>
                     </div>
                 </div>
         `;
@@ -207,16 +164,6 @@ app.get('/', (req, res) => {
     html += `
             </div>
         </div>
-        <script>
-            function togglePokemonDetails(id, button) {
-                const details = document.getElementById(id);
-                if (!details) return;
-
-                const isOpen = details.style.display === 'block';
-                details.style.display = isOpen ? 'none' : 'block';
-                button.textContent = isOpen ? 'Voir plus (JS)' : 'Voir moins';
-            }
-        </script>
     </body>
     </html>
     `;
@@ -364,7 +311,7 @@ app.get('/add-pokemon', (req, res) => {
                     <input type="text" id="types" name="types" placeholder="Feu, Plante" required>
                 </div>
                 <div class="button-group">
-                    <a href="/" class="btn-cancel" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Annuler</a>
+                    <a href="/pokemons" class="btn-cancel" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Annuler</a>
                     <button type="submit" class="btn-submit">Ajouter</button>
                 </div>
             </form>
@@ -399,21 +346,15 @@ app.post('/api/add-pokemon', (req, res) => {
     // Ajouter à la liste en mémoire
     pokemons.push(newPokemon);
 
-    // En local on persiste dans le fichier; sur Vercel le filesystem est non persistant/lecture seule.
-    if (!process.env.VERCEL) {
-        const pokemonsContent = 'const pokemons = ' + JSON.stringify(pokemons, null, 2) + '\n\nmodule.exports = pokemons;';
-        fs.writeFileSync(path.join(__dirname, 'db-pokemons.js'), pokemonsContent);
-    }
+    // Écrire dans db-pokemons.js
+    const pokemonsContent = 'const pokemons = ' + JSON.stringify(pokemons, null, 2) + '\n\nmodule.exports = pokemons;';
+    fs.writeFileSync(path.join(__dirname, 'db-pokemons.js'), pokemonsContent);
 
     // Redirection vers la page des Pokémon
-    res.redirect('/');
+    res.redirect('/pokemons');
 });
 
 // Lancement du serveur
-if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`Server listening on http://localhost:${PORT}`);
-    });
-}
-
-module.exports = app;
+app.listen(PORT, () => {
+    console.log(`Server listening on http://localhost:${PORT}`);
+});
