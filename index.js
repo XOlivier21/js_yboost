@@ -6,12 +6,18 @@ let helper = require('./helper');
 
 const app = express();
 const PORT = 3003;
+const isVercel = process.env.VERCEL === '1';
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 // Page cartes Pokémon
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/pokemons', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -190,15 +196,21 @@ app.post('/api/add-pokemon', (req, res) => {
     // Ajouter à la liste en mémoire
     pokemons.push(newPokemon);
 
-    // Écrire dans db-pokemons.js
-    const pokemonsContent = 'const pokemons = ' + JSON.stringify(pokemons, null, 2) + '\n\nmodule.exports = pokemons;';
-    fs.writeFileSync(path.join(__dirname, 'db-pokemons.js'), pokemonsContent);
+    // Sur Vercel, le filesystem est non persistant: on ne tente pas d'écrire sur disque.
+    if (!isVercel) {
+        const pokemonsContent = 'const pokemons = ' + JSON.stringify(pokemons, null, 2) + '\n\nmodule.exports = pokemons;';
+        fs.writeFileSync(path.join(__dirname, 'db-pokemons.js'), pokemonsContent);
+    }
 
     // Redirection vers la page des Pokémon
-    res.redirect('/pokemons');
+    res.redirect('/');
 });
 
 // Lancement du serveur
-app.listen(PORT, () => {
-    console.log(`Server listening on http://localhost:${PORT}`);
-});
+if (!isVercel) {
+    app.listen(PORT, () => {
+        console.log(`Server listening on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;
