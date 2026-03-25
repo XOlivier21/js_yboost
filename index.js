@@ -311,7 +311,7 @@ app.get('/add-pokemon', (req, res) => {
                     <input type="text" id="types" name="types" placeholder="Feu, Plante" required>
                 </div>
                 <div class="button-group">
-                    <a href="/pokemons" class="btn-cancel" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Annuler</a>
+                    <a href="/" class="btn-cancel" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Annuler</a>
                     <button type="submit" class="btn-submit">Ajouter</button>
                 </div>
             </form>
@@ -346,15 +346,21 @@ app.post('/api/add-pokemon', (req, res) => {
     // Ajouter à la liste en mémoire
     pokemons.push(newPokemon);
 
-    // Écrire dans db-pokemons.js
-    const pokemonsContent = 'const pokemons = ' + JSON.stringify(pokemons, null, 2) + '\n\nmodule.exports = pokemons;';
-    fs.writeFileSync(path.join(__dirname, 'db-pokemons.js'), pokemonsContent);
+    // En local on persiste dans le fichier; sur Vercel le filesystem est non persistant/lecture seule.
+    if (!process.env.VERCEL) {
+        const pokemonsContent = 'const pokemons = ' + JSON.stringify(pokemons, null, 2) + '\n\nmodule.exports = pokemons;';
+        fs.writeFileSync(path.join(__dirname, 'db-pokemons.js'), pokemonsContent);
+    }
 
     // Redirection vers la page des Pokémon
-    res.redirect('/pokemons');
+    res.redirect('/');
 });
 
 // Lancement du serveur
-app.listen(PORT, () => {
-    console.log(`Server listening on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server listening on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;
